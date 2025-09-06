@@ -1,13 +1,11 @@
 const dotenv = require("dotenv");
 dotenv.config(); // Load environment variables
-
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const path = require("path");
 const cors = require("cors");
 const express = require("express");
 const app = express();
 const PORT = process.env.PORT || 5000;
+// const __dirname = path.resolve();
 
 // Imports:
 const notesRoutes = require("./routes/notesRoutes");
@@ -16,21 +14,30 @@ const ConnectionString = require("./config/db");
 // Connect to database:
 ConnectionString();
 
-// Middleware:
-app.use(cors({
-  origin: "http://localhost:5173", // Allow your frontend origin here
-  methods: "GET,POST,PUT,DELETE",  // Allowed HTTP methods
-  credentials: true,               // Enable cookies and auth headers if used
-}));
+if (process.env.NODE_ENV !== "production") {
+  // Middleware:
+  app.use(
+    cors({
+      origin: "http://localhost:5173", // Allow your frontend origin here
+      methods: "GET,POST,PUT,DELETE", // Allowed HTTP methods
+      credentials: true, // Enable cookies and auth headers if used
+    })
+  );
+}
 
 app.use(express.json());
 
 // Routes:
 app.use("/api/notes", notesRoutes);
 
-app.get("/", async (req, res) => {
-  return res.json({ message: "Server working fine shawty" });
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+ app.get("/*splat", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
 });
+
+}
 
 app.listen(PORT, () => {
   console.log("Server has started on port", PORT);
